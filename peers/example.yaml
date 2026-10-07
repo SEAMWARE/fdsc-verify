@@ -1,0 +1,50 @@
+# Example peer file. **Only `participantId` is required.**
+#
+# `protocolUrl` is the counterparty's Dataspace Protocol endpoint, and it is
+# optional because most of what a peer is good for needs nothing but its DID:
+# whether its DID document resolves, whether our DID is in its trusted issuers
+# list, whether the dashboard names it correctly. Declare a peer without one
+# when you reach it through its gateway rather than through fdsc-edc - the DSP
+# checks then SKIP with that reason instead of making you invent a URL.
+#
+# `context` and `namespace` are optional; when present - i.e. when you happen to
+# have kube access to the counterparty - they unlock the both-sides checks:
+# whether our DID is in their trusted issuers list, and whether the credential
+# their identityhub stores still verifies against their own DID document. Those
+# two catch failures that otherwise look like *our* connector being broken.
+#
+# Watch the participantId exactly. Deployments differ on whether the DID carries
+# a path suffix: a did:web served from /did/did.json is `did:web:host:did`, one
+# served from /.well-known/did.json is just `did:web:host`. Getting it wrong
+# produces a token with the wrong `aud` and a confusing rejection at the peer.
+# Both shapes are in use in the wild, which is why the two examples below differ.
+
+peers:
+  # A counterparty running fdsc-edc, one entry per lane: pair like with like,
+  # our dcp lane against their dcp endpoint.
+  - name: partner-edc-dcp
+    lane: dcp
+    participantId: did:web:did-provider.example.org:did
+    protocolUrl: https://dcp-provider.example.org/api/dsp/2025-1
+    context: partner-cluster        # optional; unlocks peer-trusts-us and peer-credential-valid
+    namespace: provider
+
+  - name: partner-edc-oid4vc
+    lane: oid4vc
+    participantId: did:web:did-provider.example.org:did
+    protocolUrl: https://dsp-provider.example.org/api/dsp/2025-1
+    context: partner-cluster
+    namespace: provider
+
+  # The other did:web shape: no path suffix, served from /.well-known/did.json.
+  - name: other-partner-edc-dcp
+    lane: dcp
+    participantId: did:web:did-consumer.example.net
+    protocolUrl: https://dcp-consumer.example.net/api/dsp/2025-1
+
+  # A counterparty we only talk to over the FIWARE path: no DSP endpoint, so
+  # `peer-reachable` and the flow checks skip and the identity ones still run.
+  - name: partner-fiware-only
+    participantId: did:web:did-provider.example.org:did
+    context: partner-cluster
+    namespace: provider

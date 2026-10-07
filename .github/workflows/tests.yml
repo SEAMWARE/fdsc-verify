@@ -1,0 +1,26 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12"]
+        # bare: no extras at all, which is how the tool is meant to run.
+        # all: cryptography + PyYAML, so the ES256 and YAML paths are exercised too.
+        extras: [bare, all]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - if: matrix.extras == 'all'
+        run: pip install cryptography PyYAML
+      - run: python -m unittest discover -s tests
+      - run: python -m fdsc_verify --list-checks > /dev/null

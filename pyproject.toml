@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fdsc-verify"
+version = "0.1.0"
+description = "Verify that a deployed FDSC's EDC flows work, and say why when they do not"
+requires-python = ">=3.9"
+# Deliberately no runtime dependencies: the tool has to run from a bare python3
+# in any container. `cryptography` is optional and only needed to verify ES256
+# signatures; without it those checks degrade to SKIP instead of lying. PyYAML is
+# optional too - peer and config files are accepted as JSON.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/SEAMWARE/fdsc-verify"
+Documentation = "https://github.com/SEAMWARE/fdsc-verify/blob/main/docs/troubleshooting.md"
+
+[project.optional-dependencies]
+ec = ["cryptography>=3.4"]
+yaml = ["PyYAML>=5.4"]
+all = ["cryptography>=3.4", "PyYAML>=5.4"]
+
+[project.scripts]
+fdsc-verify = "fdsc_verify.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["fdsc_verify*"]
