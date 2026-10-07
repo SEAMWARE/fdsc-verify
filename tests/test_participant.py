@@ -19,6 +19,12 @@ from fdsc_verify.checks import identity
 from fdsc_verify.model import Status
 from fdsc_verify.profile import Profile
 
+try:
+    import yaml  # noqa: F401  (the verifier's server.yaml is a cluster source only with it)
+    HAVE_YAML = True
+except ImportError:
+    HAVE_YAML = False
+
 DID = "did:web:did-provider.example.org"
 
 # What dev's consumer really declares: a did-helper URL and a placeholder.
@@ -140,6 +146,7 @@ class TestResolution(unittest.TestCase):
         self.assertIsNone(who.did)
         self.assertEqual(who.did_sources, {})
 
+    @unittest.skipUnless(HAVE_YAML, "needs PyYAML")
     def test_the_cluster_answers_when_a_gitops_install_left_no_values(self):
         """dev's provider: Argo renders with `helm template`, so there is no release
         Secret and `values.trust` is "none". It had a did-helper, a verifier and a
@@ -171,6 +178,7 @@ class TestResolution(unittest.TestCase):
                         kube=kube(did="${DID}"))
         self.assertEqual(who.did_sources, {})
 
+    @unittest.skipUnless(HAVE_YAML, "needs PyYAML")
     def test_the_cluster_never_outranks_a_source_that_already_answered(self):
         """Measured before shipping: with this tier added, not one verdict moves on
         any of the four demo deployments. It may only fill a gap."""
@@ -182,6 +190,7 @@ class TestResolution(unittest.TestCase):
         # ...and it is still recorded, because the comparison is the diagnosis
         self.assertEqual(who.did_sources["verifier (cluster)"], DID)
 
+    @unittest.skipUnless(HAVE_YAML, "needs PyYAML")
     def test_a_cluster_did_that_disagrees_is_recorded_not_hidden(self):
         who = P.resolve(deployment(services={"verifier": "verifier"}), Profile(),
                         values(PROVIDER), kube=kube(did="did:web:somebody-else"))
